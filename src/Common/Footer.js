@@ -6,7 +6,6 @@ import PhoneInTalkIcon from './Assets/imgs/fPhnIcon.svg';
 import EmailIcon from './Assets/imgs/fenvelopIcon.svg';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 
 function Footer() {
