@@ -1,0 +1,5 @@
+.signInModal .MuiBox-root.css-1wnsr1i {background: none !important; border: none;;}
+.signInModal .MuiFormControl-root {width: 100%;}
+.signInModal h2 {display: flex;align-items: center;justify-content: center;font-size: 18px;font-weight: 600;}
+.signInModal h2 > svg {margin-right: 8px;font-size: 35px;color: #525151;}
+.chat-page .chatNav  .menu-list {margin-left: -45px;}

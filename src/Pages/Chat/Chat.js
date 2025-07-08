@@ -1,6 +1,7 @@
-import * as React from 'react';
+import {useState, useEffect, useRef} from 'react';
 import HeaderChat from '../../Common/HeaderChat';
-import { Grid, Link, Container, Button } from "@mui/material";
+import { Grid, Container, Button } from "@mui/material";
+import { Link } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import OutlinedInput from '@mui/material/OutlinedInput';
@@ -22,17 +23,110 @@ import TabContext from '@mui/lab/TabContext';
 import TabList from '@mui/lab/TabList';
 import TabPanel from '@mui/lab/TabPanel';
 import Gallery from './Gallery';
-import Footer from '../../Common/Footer';
 import ChatLeftNav from '../../Common/ChatLeftNav';
+import {useAppSelector, useAppDispatch} from '../../Hooks';
+import axios from "axios";
+import { request, success, failure } from '../../Reducers/ChatBot';
+
+
 
 function Chat() {
-  const [value, setValue] = React.useState('1');
+  const dispatch = useAppDispatch();
+  const islogin = useAppSelector((state) => state.auth.isAuthenticated);
+  const token = useAppSelector((state) => state.auth.token);
+  const isLoading = useAppSelector((state) => state.chatBot.loading);
+
+  const [value, setValue] = useState('1');
+  const inputRef =  useRef(null);
+  const URL = process.env.REACT_APP_API_URL;
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
 
-  const [suggestion, setSuggestion] = React.useState(false);
+  const [suggestion, setSuggestion] = useState(false);
+  const [message, setMessage] = useState('');
+  const [chatHistory, setChatHistory] = useState([]);
+
+  const handleChat = (e) => {
+    e.preventDefault();
+    setChatHistory([...chatHistory, {user:0, message: message}]);
+    const chatHistoryLocal = JSON.parse(localStorage.getItem('chatHistory')) || [];
+    localStorage.setItem('chatHistory', JSON.stringify([...chatHistoryLocal, {user:0, message: message}]));
+    chatBotreply();
+    setMessage('');
+  }
+  const chatBotreply = () => {
+    dispatch(request());
+    const msgBody = {
+      title: "Chat request",
+      session_id: "session123",
+      user_query: message,
+      character_id: 1,
+      role: "system",
+      content_type: "text"
+    };
+    setTimeout( async() => {
+      console.log("token", `Bearer ${token}`);
+     try {
+        const response = await axios.post(`${URL}/chats`, msgBody, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          withCredentials: false 
+        });
+
+        console.log('Response:', response.data.chat_response);
+        const botmessage = response.data.chat_response;
+        const botReply = {user:1, message: botmessage};
+        setChatHistory((prev) => [...prev, botReply]);
+        const chatHistoryLocal = JSON.parse(localStorage.getItem('chatHistory')) || [];
+        localStorage.setItem('chatHistory', JSON.stringify([...chatHistoryLocal, botReply]));
+        const data = JSON.stringify([...chatHistoryLocal, botReply])
+        dispatch(success({data}));
+      } catch (error) {
+        console.error('Error:', error);
+      }
+
+    
+      console.log("chatHistory", chatHistory);
+      
+    }, 1000);
+  }
+
+  const getCurrentTime12Hour = () => {
+    const now = new Date();
+    let hours = now.getHours();
+    const minutes = now.getMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+
+    hours = hours % 12;
+    hours = hours ? hours : 12; // the hour '0' should be '12'
+
+    const formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
+    return `${hours}:${formattedMinutes} ${ampm}`;
+  };
+
+  // Usage in a React component
+  function CurrentTime() {
+    return getCurrentTime12Hour();
+
+  }
+
+  useEffect(() => {
+    // Scroll to the element when component mounts
+    if (inputRef.current) {
+        inputRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, []);
+
+
+  useEffect(() => {
+    inputRef.current &&inputRef.current.focus();
+  },[chatHistory]);
+
+  console.log("chatHistory", chatHistory);
 
   return (
     <div className="chat-page">
@@ -182,37 +276,19 @@ function Chat() {
                 </Box>
               </Grid>
               <Grid size={{xs:12, md:6}} className="middle" style={{backgroundImage: `URL(${ChatBg})`}}>
+                 {islogin ?
+                 <>
                 <Typography component={"div"} className='chatWindow'>
-                    <div className='userMsg msg'>
-                      Hi there, How are you?
-                      <img src={UserMsgDeliverIcon} className='deliverIcon' alt='icon'/>
-                      <small className='time'>12:31 PM</small>
+                  {chatHistory.length > 0 && chatHistory.map((chat, index) => (
+                    <div key={index} className={chat.user === 0 ? 'userMsg msg' : 'self msg'} ref={index === chatHistory.length - 1 ? inputRef : null}>
+                      {chat.message} 
+                      <img src={chat.user === 0 ? UserMsgDeliverIcon : SelfMsgDeliverIcon} className='deliverIcon' alt='icon'/>
+                      <small className='time'>{CurrentTime()}</small>
                     </div>
-                    <div className='self msg'>
-                      Hi, I am coming there in few minutes. Please wait!! I am in taxi right now.
-                      <img src={SelfMsgDeliverIcon} className='deliverIcon' alt='icon'/>
-                      <small className='time'>12:31 PM</small>
-                    </div>
-                    <div className='userMsg msg'>
-                       Hi, I am coming there in few minutes. Please wait!! I am in taxi right now. Hi, I am coming there in few minutes. Please wait!! I am in taxi right now.
-                      <img src={UserMsgDeliverIcon} className='deliverIcon' alt='icon'/>
-                      <small className='time'>12:31 PM</small>
-                    </div>
-                    <div className='userMsg msg'>
-                      Hi there, How are you?
-                      <img src={UserMsgDeliverIcon} className='deliverIcon' alt='icon'/>
-                      <small className='time'>12:31 PM</small>
-                    </div>
-                    <div className='userMsg msg'>
-                      Hi there, How are you?
-                      <img src={UserMsgDeliverIcon} className='deliverIcon' alt='icon'/>
-                      <small className='time'>12:31 PM</small>
-                    </div>
-                    <div className='self msg'>
-                      Hi, I am coming there in few minutes. Please wait!! I am in taxi right now.
-                      <img src={SelfMsgDeliverIcon} className='deliverIcon' alt='icon'/>
-                      <small className='time'>12:31 PM</small>
-                    </div>
+                  ))} 
+                  {isLoading && <em>Writing...</em>}
+
+                    
                 </Typography>
                 <Typography component={"div"} className="chatWriteBox">
                     <Grid container spacing={0} className="wrapper">
@@ -221,7 +297,8 @@ function Chat() {
                           <span className='smalies'>
                             <img src={SmileyIcon}/>
                           </span>
-                          <input type="text" className='input' placeholder='Type a message'/>
+                          <input type="text" className='input' placeholder='Type a message'  value={message} onChange={(e)=>{setMessage(e.target.value)}}
+                            onKeyDown={(e) => {if (e.key === 'Enter') handleChat(e)}}/>
                           <span className='askBtn' onClick={()=>{setSuggestion(!suggestion)}}>
                             <img src={ArrowUpIcon}/> Ask
                           </span>
@@ -250,6 +327,13 @@ function Chat() {
                       </Grid>
                     </Grid>
                 </Typography>
+                </>
+                :
+                  <div className='loginPrompt'>
+                    <p>Please login to open the chat window.</p>
+                  </div>
+                  }
+                
               </Grid>
               <Grid size={{xs:12, md:3}} className="right-side">
                 <Gallery/>

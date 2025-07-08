@@ -22,7 +22,7 @@ function Footer() {
                                 <p>Copyright © 2024 IG Wild</p>
                                 <p>Social Media</p>
                             </Grid>
-                            <Grid size={{xs:12, md:4, lg:5}} textAlign={"left"} className="footer-links" verticalAlign="middle">
+                            <Grid size={{xs:12, md:4, lg:5}} textAlign={"left"} className="footer-links">
                                 <h3>About</h3>
                                 <ul className='footerLink'>
                                     <li><Link href="#">About Company</Link></li>
